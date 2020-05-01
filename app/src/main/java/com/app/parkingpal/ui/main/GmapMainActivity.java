@@ -5,7 +5,6 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -37,7 +36,6 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
     private DrawerLayout mainMenuDrawer;
     private static GoogleMap googleMap;
     private FusedLocationProviderClient fusedLocationClient;
-    private SupportMapFragment mapFragment;
     private double longitude;
     private double latitude;
     private static final int ASK_MULTIPLE_PERMISSION_REQUEST_CODE = 101;
@@ -58,7 +56,7 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
                         ASK_MULTIPLE_PERMISSION_REQUEST_CODE);
             }
         }
-        mapFragment = (SupportMapFragment) getSupportFragmentManager()
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
@@ -69,9 +67,9 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
     }
 
     @Override
-    public void onMapReady(final GoogleMap googleMap) {//TODO: refactor it
-        this.googleMap = googleMap;
-        this.googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(
+    public void onMapReady(final GoogleMap googleMap) {
+        GmapMainActivity.googleMap = googleMap;
+        GmapMainActivity.googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(
                 this, R.raw.style_json));
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(this, new OnSuccessListener<Location>() {
@@ -83,21 +81,21 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
                             latitude = location.getLatitude();
                             longitude = location.getLongitude();
                             LatLng position = new LatLng(latitude, longitude);
-                            GmapMainActivity.this.userPosition = GmapMainActivity.this.googleMap.addMarker(new MarkerOptions().position(position).title("My Position").icon(BitmapDescriptorFactory.fromResource(R.drawable.car_icon)));
-                            GmapMainActivity.this.googleMap.moveCamera(CameraUpdateFactory.newLatLng(position));
-                            GmapMainActivity.this.googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position,17.0f));
+                            GmapMainActivity.this.userPosition = GmapMainActivity.googleMap.addMarker(new MarkerOptions().position(position).title("My Position").icon(BitmapDescriptorFactory.fromResource(R.drawable.car_icon)));
+                            GmapMainActivity.googleMap.moveCamera(CameraUpdateFactory.newLatLng(position));
+                            GmapMainActivity.googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position,17.0f));
 
                             //mocked empty parking spot location
                             iotMock = new IOTMock();
                             iotMock.emptyParkingSpotsListMock.forEach(mock -> {
                                 LatLng emptyParkingSpot = new LatLng(mock.get("latitude"),mock.get("longitude"));
-                                GmapMainActivity.this.googleMap.addMarker(new MarkerOptions().position(emptyParkingSpot).title("Empty Spot").icon(BitmapDescriptorFactory.fromResource(R.drawable.empty_parking_spot_icon)));
+                                GmapMainActivity.googleMap.addMarker(new MarkerOptions().position(emptyParkingSpot).title("Empty Spot").icon(BitmapDescriptorFactory.fromResource(R.drawable.empty_parking_spot_icon)));
                             });
 
                         }
                     }
                 });
-        this.googleMap.setOnMarkerClickListener(this);
+        GmapMainActivity.googleMap.setOnMarkerClickListener(this);
     }
 
     @Override
@@ -110,7 +108,6 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
                     .apiKey(getString(R.string.google_maps_key))
                     .build();
             new DirectionsHttpRequestTask().execute(directionsRequest.getUrl());
-
         }
         return false;
     }
