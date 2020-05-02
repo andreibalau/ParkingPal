@@ -27,6 +27,17 @@
         android:onClick="onClickMenuIcon"
         app:srcCompat="@drawable/menu_icon" />
 
+    <TextView
+        android:id="@+id/permissionsDeniedText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:gravity="center"
+        android:visibility="invisible"
+        android:textSize="30sp"
+        android:text="@string/permissions_denied_message" />
+
 
 </RelativeLayout>
 

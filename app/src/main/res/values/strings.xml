@@ -4,4 +4,5 @@
     <string name="menu_second">Second</string>
     <string name="menu_third">Third</string>
     <string name="description_menu_item">Menu handler</string>
+    <string name="permissions_denied_message">Please grant permissions to fully benefit from app features!</string>
 </resources>

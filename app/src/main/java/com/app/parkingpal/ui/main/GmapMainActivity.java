@@ -6,6 +6,7 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -42,13 +43,13 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
     private IOTMock iotMock;
     private Marker userPosition;
 
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_nav_menu);
         mainMenuDrawer = findViewById(R.id.menu_drawer_layout);
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.INTERNET)!= PackageManager.PERMISSION_GRANTED){
                 ActivityCompat.requestPermissions(GmapMainActivity.this,
@@ -56,14 +57,36 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
                         ASK_MULTIPLE_PERMISSION_REQUEST_CODE);
             }
         }
+        buildGmap();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case 101: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                        && grantResults[1] == PackageManager.PERMISSION_GRANTED ) {
+                    buildGmap();
+                } else {
+                    TextView meesage = findViewById(R.id.permissionsDeniedText);
+                    meesage.setVisibility(View.VISIBLE);
+                    Toast toast = Toast.makeText(this, "Please, next time accept permissions.", Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+                return;
+            }
+            // other 'case' lines to check for other
+            // permissions this app might request.
+        }
+    }
+
+    private void buildGmap(){
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
-
-
     }
 
     @Override
