@@ -5,6 +5,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,7 +31,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
@@ -41,7 +47,10 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
     private double latitude;
     private static final int ASK_MULTIPLE_PERMISSION_REQUEST_CODE = 101;
     private IOTMock iotMock;
-    private Marker userPosition;
+    private LatLng userLocation;
+    private Marker userPositionMarker;
+    private static List<Polyline> polylineHistory;
+
 
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -58,6 +67,7 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
             }
         }
         buildGmap();
+        polylineHistory = new ArrayList<>();
     }
 
     @Override
@@ -77,8 +87,6 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
                 }
                 return;
             }
-            // other 'case' lines to check for other
-            // permissions this app might request.
         }
     }
 
@@ -89,10 +97,19 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onMapReady(final GoogleMap googleMap) {
         GmapMainActivity.googleMap = googleMap;
-        GmapMainActivity.googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(
+        gmapsUiSettings(GmapMainActivity.googleMap);
+        showEmptyParkingSpots(GmapMainActivity.googleMap);
+    }
+
+    private void gmapsUiSettings(GoogleMap googleMap){
+        googleMap.getUiSettings().setMyLocationButtonEnabled(true);
+        googleMap.setMyLocationEnabled(false);
+        googleMap.getUiSettings().setCompassEnabled(false);
+        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(
                 this, R.raw.style_json));
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(this, new OnSuccessListener<Location>() {
@@ -103,22 +120,24 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
                         if (location != null) {
                             latitude = location.getLatitude();
                             longitude = location.getLongitude();
-                            LatLng position = new LatLng(latitude, longitude);
-                            GmapMainActivity.this.userPosition = GmapMainActivity.googleMap.addMarker(new MarkerOptions().position(position).title("My Position").icon(BitmapDescriptorFactory.fromResource(R.drawable.car_icon)));
-                            GmapMainActivity.googleMap.moveCamera(CameraUpdateFactory.newLatLng(position));
-                            GmapMainActivity.googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position,17.0f));
-
-                            //mocked empty parking spot location
-                            iotMock = new IOTMock();
-                            iotMock.emptyParkingSpotsListMock.forEach(mock -> {
-                                LatLng emptyParkingSpot = new LatLng(mock.get("latitude"),mock.get("longitude"));
-                                GmapMainActivity.googleMap.addMarker(new MarkerOptions().position(emptyParkingSpot).title("Empty Spot").icon(BitmapDescriptorFactory.fromResource(R.drawable.empty_parking_spot_icon)));
-                            });
-
+                            GmapMainActivity.this.userLocation = new LatLng(latitude, longitude);
+                            GmapMainActivity.this.userPositionMarker = googleMap.addMarker(new MarkerOptions().position(GmapMainActivity.this.userLocation).title("My Position").icon(BitmapDescriptorFactory.fromResource(R.drawable.car_icon)));
+                            GmapMainActivity.googleMap.moveCamera(CameraUpdateFactory.newLatLng(GmapMainActivity.this.userLocation));
+                            GmapMainActivity.googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(GmapMainActivity.this.userLocation,17.0f));
                         }
                     }
                 });
         GmapMainActivity.googleMap.setOnMarkerClickListener(this);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void showEmptyParkingSpots(GoogleMap googleMap){
+        //mocked empty parking spot location
+        iotMock = new IOTMock();
+        iotMock.emptyParkingSpotsListMock.forEach(mock -> {
+            LatLng emptyParkingSpot = new LatLng(mock.get("latitude"),mock.get("longitude"));
+            googleMap.addMarker(new MarkerOptions().position(emptyParkingSpot).title("Empty Spot").icon(BitmapDescriptorFactory.fromResource(R.drawable.empty_parking_spot_icon)));
+        });
     }
 
     @Override
@@ -126,12 +145,17 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
         if(!marker.equals(null)) {
             Toast.makeText(this, String.format("latitude: %s,longitude: %s",marker.getPosition().latitude,marker.getPosition().longitude), Toast.LENGTH_SHORT).show();
             DirectionsRequest directionsRequest = DirectionsRequest.builder()
-                    .origin(userPosition.getPosition())
+                    .origin(userPositionMarker.getPosition())
                     .destination(marker.getPosition())
                     .apiKey(getString(R.string.google_maps_key))
                     .build();
             new DirectionsHttpRequestTask().execute(directionsRequest.getUrl());
         }
+        if(polylineHistory.size()==1){
+            polylineHistory.get(0).remove();
+            polylineHistory.remove(0);
+        }
+//        Log.d("=====>", ""+ polylineHistory.size());
         return false;
     }
 
@@ -145,5 +169,13 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
 
     public static GoogleMap getGoogleMap() {
         return googleMap;
+    }
+
+    public void goToMyLocation(View view) {
+        GmapMainActivity.googleMap.moveCamera(CameraUpdateFactory.newLatLng(GmapMainActivity.this.userLocation));
+    }
+
+    public static void addToPolylineHistory(Polyline polyline) {
+        GmapMainActivity.polylineHistory.add(polyline);
     }
 }

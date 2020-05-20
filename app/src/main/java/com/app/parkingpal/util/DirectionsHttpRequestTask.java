@@ -3,6 +3,7 @@ package com.app.parkingpal.util;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
@@ -23,6 +24,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,7 +33,7 @@ public class DirectionsHttpRequestTask extends AsyncTask<String, String, Optiona
     private final static String DIRECTIONS_OVERVIEW_POLYLINE = "overview_polyline";
     private final static String DIRECTIONS_POINTS = "points";
     private HttpURLConnection urlConnection;
-
+    private Polyline polyline;
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -65,7 +67,8 @@ public class DirectionsHttpRequestTask extends AsyncTask<String, String, Optiona
             JSONObject jsonObject = new JSONObject(jsonArray.get(0).toString());
             JSONObject overviewPolylineJson = new JSONObject(jsonObject.getString(DIRECTIONS_OVERVIEW_POLYLINE));
             List<LatLng> points = PolyUtil.decode(overviewPolylineJson.getString(DIRECTIONS_POINTS));
-            Polyline polyline = GmapMainActivity.getGoogleMap().addPolyline(new PolylineOptions().addAll(points));
+            polyline = GmapMainActivity.getGoogleMap().addPolyline(new PolylineOptions().addAll(points));
+            GmapMainActivity.addToPolylineHistory(polyline);//It lazy adds the polyline, when pressing a new marker it adds the previous polyline into polylineHistory instead of the current , maybe because of the async call
             polyline.setWidth(17f);
             polyline.setColor(Color.rgb(110, 165, 255));
         } catch (JSONException e) {
