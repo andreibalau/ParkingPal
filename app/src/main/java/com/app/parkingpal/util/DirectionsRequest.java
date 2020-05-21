@@ -1,4 +1,4 @@
-package com.app.parkingpal.model;
+package com.app.parkingpal.util;
 
 import com.google.android.gms.maps.model.LatLng;
 
