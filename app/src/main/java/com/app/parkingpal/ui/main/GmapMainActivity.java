@@ -58,13 +58,15 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
         return gmap;
     }
 
+    public static void addToPolylineHistory(Polyline polyline) {
+        GmapMainActivity.polylineHistory.add(polyline);
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         gmapMainViewModel = new ViewModelProvider(this).get(GmapMainViewModel.class);
-        gmapMainViewModel.findAll().observe(this, this::displayEmptyParkingSpots);
         setContentView(R.layout.main_nav_menu);
         mainMenuDrawer = findViewById(R.id.menu_drawer_layout);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -77,6 +79,12 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
         }
         buildGmap();
         polylineHistory = new ArrayList<>();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        gmapMainViewModel.findAll().observe(this, this::displayEmptyParkingSpots);
     }
 
     @Override
@@ -133,12 +141,13 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
         }
     }
 
-    public void goToMyLocation(View view) {
-        gmap.moveCamera(CameraUpdateFactory.newLatLng(GmapMainActivity.this.userLocation));
+    public void onClickGoToMyLocation(View view) {
+        goToMyLocation();
     }
 
-    public static void addToPolylineHistory(Polyline polyline) {
-        GmapMainActivity.polylineHistory.add(polyline);
+    public void goToMyLocation(){
+        gmap.moveCamera(CameraUpdateFactory.newLatLng(GmapMainActivity.this.userLocation));
+        gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(GmapMainActivity.this.userLocation,17.0f));
     }
 
     private void buildGmap(){
@@ -165,8 +174,7 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
                             longitude = location.getLongitude();
                             GmapMainActivity.this.userLocation = new LatLng(latitude, longitude);
                             GmapMainActivity.this.userPositionMarker = googleMap.addMarker(new MarkerOptions().position(GmapMainActivity.this.userLocation).title("My Position").icon(BitmapDescriptorFactory.fromResource(R.drawable.car_icon)));
-                            googleMap.moveCamera(CameraUpdateFactory.newLatLng(GmapMainActivity.this.userLocation));
-                            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(GmapMainActivity.this.userLocation,17.0f));
+                            goToMyLocation();
                         }
                     }
                 });

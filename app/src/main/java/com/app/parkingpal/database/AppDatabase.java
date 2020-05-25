@@ -39,19 +39,16 @@ public abstract class AppDatabase extends RoomDatabase {
             ContentValues parkingSpotsValues = new ContentValues();
             parkingSpotsValues.put("latitude",45.608807);
             parkingSpotsValues.put("longitude",25.301236);
-            parkingSpotsValues.put("availability",true);
             db.insert("parking_spots", OnConflictStrategy.IGNORE,parkingSpotsValues);
 
             parkingSpotsValues = new ContentValues();
             parkingSpotsValues.put("latitude",45.605002);
             parkingSpotsValues.put("longitude",25.305924);
-            parkingSpotsValues.put("availability",true);
             db.insert("parking_spots", OnConflictStrategy.IGNORE,parkingSpotsValues);
 
             parkingSpotsValues = new ContentValues();
             parkingSpotsValues.put("latitude",45.604717);
             parkingSpotsValues.put("longitude",25.307844);
-            parkingSpotsValues.put("availability",true);
             db.insert("parking_spots", OnConflictStrategy.IGNORE,parkingSpotsValues);
         }
 

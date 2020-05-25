@@ -18,6 +18,4 @@ public class ParkingSpot {
     private Double latitude;
     @ColumnInfo(name = "longitude")
     private Double longitude;
-    @ColumnInfo(name = "availability")
-    private Boolean availability;
 }
