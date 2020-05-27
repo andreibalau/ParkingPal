@@ -1,6 +1,7 @@
 package com.app.parkingpal.repository;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.app.parkingpal.model.ParkingSpot;
 import com.app.parkingpal.model.dao.ParkingSpotDao;
@@ -13,6 +14,10 @@ import lombok.RequiredArgsConstructor;
 public class ParkingSpotRepository {
 
     private final ParkingSpotDao parkingSpotDao;
+
+    public void saveAll(List<ParkingSpot> parkingSpots){
+        new Thread(() ->parkingSpotDao.saveAll(parkingSpots)).start();
+    }
 
     public LiveData<List<ParkingSpot>> findAll() {
         return parkingSpotDao.findAll();

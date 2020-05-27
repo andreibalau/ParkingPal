@@ -1,8 +1,5 @@
 package com.app.parkingpal.injection;
 
-import android.content.Context;
-
-import com.app.parkingpal.ui.main.GmapMainActivity;
 import com.app.parkingpal.ui.main.GmapMainViewModel;
 
 import javax.inject.Singleton;

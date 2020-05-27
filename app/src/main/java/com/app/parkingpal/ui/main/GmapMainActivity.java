@@ -36,8 +36,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.tasks.OnSuccessListener;
 
+import org.json.JSONException;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
@@ -71,7 +74,7 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
         mainMenuDrawer = findViewById(R.id.menu_drawer_layout);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.INTERNET)!= PackageManager.PERMISSION_GRANTED){
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_NETWORK_STATE)!= PackageManager.PERMISSION_GRANTED){
                 ActivityCompat.requestPermissions(GmapMainActivity.this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.INTERNET},
                         ASK_MULTIPLE_PERMISSION_REQUEST_CODE);
@@ -84,6 +87,15 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
     @Override
     protected void onResume() {
         super.onResume();
+        try {
+            gmapMainViewModel.fetchFromApi();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         gmapMainViewModel.findAll().observe(this, this::displayEmptyParkingSpots);
     }
 
@@ -97,8 +109,8 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
                         && grantResults[1] == PackageManager.PERMISSION_GRANTED ) {
                     buildGmap();
                 } else {
-                    TextView meesage = findViewById(R.id.permissionsDeniedText);
-                    meesage.setVisibility(View.VISIBLE);
+                    TextView message = findViewById(R.id.permissionsDeniedText);
+                    message.setVisibility(View.VISIBLE);
                     Toast toast = Toast.makeText(this, "Please, next time accept permissions.", Toast.LENGTH_SHORT);
                     toast.show();
                 }

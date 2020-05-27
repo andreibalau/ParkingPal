@@ -20,9 +20,9 @@ public class ParkingPalApplication extends Application {
         super.onCreate();
         component = DaggerAppComponent
                 .builder()
+                .appModule(new AppModule(getApplicationContext()))
                 .daoModule(new DaoModule())
                 .repositoryModule(new RepositoryModule())
-                .appModule(new AppModule(getApplicationContext()))
                 .build();
     }
 }
