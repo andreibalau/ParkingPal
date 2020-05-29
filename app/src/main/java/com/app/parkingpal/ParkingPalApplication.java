@@ -8,13 +8,14 @@ import com.app.parkingpal.injection.DaggerAppComponent;
 import com.app.parkingpal.injection.DaoModule;
 import com.app.parkingpal.injection.RepositoryModule;
 
-public class ParkingPalApplication extends Application {
+public class ParkingPalApplication extends Application{
 
     private static AppComponent component;
 
     public static AppComponent getAppComponent() {
         return component;
     }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -25,4 +26,5 @@ public class ParkingPalApplication extends Application {
                 .repositoryModule(new RepositoryModule())
                 .build();
     }
+
 }

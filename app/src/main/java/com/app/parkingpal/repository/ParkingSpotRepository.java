@@ -1,7 +1,6 @@
 package com.app.parkingpal.repository;
 
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 
 import com.app.parkingpal.model.ParkingSpot;
 import com.app.parkingpal.model.dao.ParkingSpotDao;
@@ -17,6 +16,10 @@ public class ParkingSpotRepository {
 
     public void saveAll(List<ParkingSpot> parkingSpots){
         new Thread(() ->parkingSpotDao.saveAll(parkingSpots)).start();
+    }
+
+    public void save(ParkingSpot parkingSpot){
+        new Thread(() ->parkingSpotDao.save(parkingSpot)).start();
     }
 
     public LiveData<List<ParkingSpot>> findAll() {

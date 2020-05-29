@@ -1,10 +1,15 @@
 package com.app.parkingpal.ui.main;
 
 import android.Manifest;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -13,6 +18,7 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.JobIntentService;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.ViewModelProvider;
@@ -20,6 +26,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.app.parkingpal.ParkingPalApplication;
 import com.app.parkingpal.R;
 import com.app.parkingpal.model.ParkingSpot;
+import com.app.parkingpal.service.SSEListener;
 import com.app.parkingpal.util.DirectionsRequest;
 import com.app.parkingpal.util.DirectionsHttpRequestTask;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -39,6 +46,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -51,11 +59,15 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
     private LatLng userLocation;
     private Marker userPositionMarker;
     private GmapMainViewModel gmapMainViewModel;
+    private Intent serviceIntent;
+    private HashMap<Double,Marker> hashMapMarker = new HashMap<>();
+    private Marker marker;
 
     private static GoogleMap gmap;
     private static List<Polyline> polylineHistory;
 
     private static final int ASK_MULTIPLE_PERMISSION_REQUEST_CODE = 101;
+    private static final int SSE_JOB_ID = 1000;
 
     public static GoogleMap getGmap() {
         return gmap;
@@ -69,6 +81,8 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        serviceIntent = new Intent(this, SSEListener.class);
+        startService(serviceIntent);
         gmapMainViewModel = new ViewModelProvider(this).get(GmapMainViewModel.class);
         setContentView(R.layout.main_nav_menu);
         mainMenuDrawer = findViewById(R.id.menu_drawer_layout);
@@ -84,19 +98,17 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
         polylineHistory = new ArrayList<>();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onResume() {
         super.onResume();
+        userLocationMarker();
         try {
             gmapMainViewModel.fetchFromApi();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
+        } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
-        gmapMainViewModel.findAll().observe(this, this::displayEmptyParkingSpots);
+        gmapMainViewModel.findAll().observe(this, this::markersController);
     }
 
     @Override
@@ -123,7 +135,7 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
     @Override
     public void onMapReady(final GoogleMap googleMap) {
         gmap = googleMap;
-        gmapsUiSettings(gmap);
+        gmapsUiSettings();
         gmap.setOnMarkerClickListener(this);//onMarkerClick()
     }
 
@@ -168,13 +180,16 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
         mapFragment.getMapAsync(this);
     }
 
-    private void gmapsUiSettings(GoogleMap googleMap){
-        googleMap.getUiSettings().setMyLocationButtonEnabled(true);
-        googleMap.setMyLocationEnabled(false);
-        googleMap.getUiSettings().setCompassEnabled(false);
-        googleMap.getUiSettings().setRotateGesturesEnabled(true);
-        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(
+    private void gmapsUiSettings(){
+        gmap.getUiSettings().setMyLocationButtonEnabled(true);
+        gmap.setMyLocationEnabled(false);
+        gmap.getUiSettings().setCompassEnabled(false);
+        gmap.getUiSettings().setRotateGesturesEnabled(true);
+        gmap.setMapStyle(MapStyleOptions.loadRawResourceStyle(
                 this, R.raw.style_json));
+    }
+
+    private void userLocationMarker(){
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(this, new OnSuccessListener<Location>() {
                     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -185,7 +200,7 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
                             latitude = location.getLatitude();
                             longitude = location.getLongitude();
                             GmapMainActivity.this.userLocation = new LatLng(latitude, longitude);
-                            GmapMainActivity.this.userPositionMarker = googleMap.addMarker(new MarkerOptions().position(GmapMainActivity.this.userLocation).title("My Position").icon(BitmapDescriptorFactory.fromResource(R.drawable.car_icon)));
+                            GmapMainActivity.this.userPositionMarker = gmap.addMarker(new MarkerOptions().position(GmapMainActivity.this.userLocation).title("My Position").icon(BitmapDescriptorFactory.fromResource(R.drawable.car_icon)));
                             goToMyLocation();
                         }
                     }
@@ -193,12 +208,19 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    private void displayEmptyParkingSpots(List<ParkingSpot> parkingSpots){
-        //mocked empty parking spot location from Room
-        Log.d("======>", "displayEmptyParkingSpots: "+parkingSpots.size());
+    private void markersController(List<ParkingSpot> parkingSpots){
         parkingSpots.forEach(parkingSpot -> {
-            LatLng emptyParkingSpot = new LatLng(parkingSpot.getLatitude(),parkingSpot.getLongitude());
-            gmap.addMarker(new MarkerOptions().position(emptyParkingSpot).title("Empty Spot").icon(BitmapDescriptorFactory.fromResource(R.drawable.empty_parking_spot_icon)));
+            if (parkingSpot.getAvailability() && hashMapMarker.get(parkingSpot.getLatitude())==null) {
+                LatLng emptyParkingSpot = new LatLng(parkingSpot.getLatitude(), parkingSpot.getLongitude());
+                marker = gmap.addMarker(new MarkerOptions().position(emptyParkingSpot).title("Empty Spot").icon(BitmapDescriptorFactory.fromResource(R.drawable.empty_parking_spot_icon)));
+                hashMapMarker.put(parkingSpot.getLatitude(),marker);
+            }
+            else if(!parkingSpot.getAvailability() && hashMapMarker.get(parkingSpot.getLatitude())!=null){
+                marker = hashMapMarker.get(parkingSpot.getLatitude());
+                marker.remove();
+                hashMapMarker.remove(parkingSpot.getLatitude());
+            }
         });
     }
+
 }

@@ -2,6 +2,7 @@ package com.app.parkingpal.injection;
 
 import android.content.Context;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import dagger.Module;
