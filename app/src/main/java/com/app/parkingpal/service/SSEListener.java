@@ -42,7 +42,7 @@ public class SSEListener extends IntentService {
     protected void onHandleIntent(@Nullable Intent intent) {
         try {
             final SseEventSourceFactory sseEventSourceFactory = SseEventSourceFactory.createEventSourceFactory();
-            final SseEventSource sseEventSource = sseEventSourceFactory.createEventSource(new URI("http://192.168.1.3:8080/test"));
+            final SseEventSource sseEventSource = sseEventSourceFactory.createEventSource(new URI("http://192.168.1.3:8080/sse-news"));//TODO: Change ip with the server mechine ip
             sseEventSource.connect();
 
             final SseEventReader sseEventReader = sseEventSource.getEventReader();

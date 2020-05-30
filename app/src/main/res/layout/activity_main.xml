@@ -25,7 +25,7 @@
         android:layout_marginTop="25dp"
         android:contentDescription="@string/description_menu_item"
         android:onClick="onClickMenuIcon"
-        app:srcCompat="@drawable/menu_icon" />
+        app:srcCompat="@drawable/ic_menu_36dp" />
 
     <TextView
         android:id="@+id/permissionsDeniedText"
@@ -47,7 +47,7 @@
         android:layout_marginTop="25dp"
         android:layout_marginEnd="25dp"
         android:onClick="onClickGoToMyLocation"
-        app:srcCompat="@drawable/ic_my_location_black_36dp" />
+        app:srcCompat="@drawable/ic_my_location_32dp" />
 
 
 </RelativeLayout>

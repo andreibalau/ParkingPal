@@ -9,8 +9,8 @@ import java.net.URL;
 
 public class ParkingPalGetRequest extends AsyncTask<String, Void, String> {
     private static final String REQUEST_METHOD = "GET";
-    private static final int READ_TIMEOUT = 15000;
-    private static final int CONNECTION_TIMEOUT = 15000;
+    private static final int READ_TIMEOUT = 5000;
+    private static final int CONNECTION_TIMEOUT = 5000;
 
     @Override
     protected String doInBackground(String... params){
