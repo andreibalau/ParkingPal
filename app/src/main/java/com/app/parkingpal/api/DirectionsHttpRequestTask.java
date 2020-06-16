@@ -1,4 +1,4 @@
-package com.app.parkingpal.util;
+package com.app.parkingpal.api;
 
 import android.graphics.Color;
 import android.os.AsyncTask;

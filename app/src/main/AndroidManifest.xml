@@ -16,16 +16,13 @@
         android:theme="@style/AppTheme.NoActionAndTitleBar"
         android:usesCleartextTraffic="true"
         tools:targetApi="m">
-        <meta-data
-            android:name="com.google.android.wearable.standalone"
-            android:value="true" />
-
         <service
             android:name=".service.SSEListener"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
-        <activity android:name=".ui.main.GmapMainActivity">
+        <activity android:name=".ui.main.GmapMainActivity"
+            android:theme="@style/SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

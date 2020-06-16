@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Build;
@@ -22,14 +21,13 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.app.parkingpal.R;
 import com.app.parkingpal.model.ParkingSpot;
 import com.app.parkingpal.service.SSEListener;
 import com.app.parkingpal.util.DirectionsRequest;
-import com.app.parkingpal.util.DirectionsHttpRequestTask;
+import com.app.parkingpal.api.DirectionsHttpRequestTask;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -83,6 +81,7 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
         super.onCreate(savedInstanceState);
         serviceIntent = new Intent(this, SSEListener.class);
         startService(serviceIntent);
+
         gmapMainViewModel = new ViewModelProvider(this).get(GmapMainViewModel.class);
         setContentView(R.layout.main_nav_menu);
         mainMenuDrawer = findViewById(R.id.menu_drawer_layout);
@@ -102,13 +101,6 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
     @Override
     protected void onResume() {
         super.onResume();
-            new Thread(()-> {
-                try {
-                    gmapMainViewModel.fetchFromApi();
-                } catch (ExecutionException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }).start();
         gmapMainViewModel.findAll().observe(this, this::markersController);
     }
 
@@ -139,6 +131,12 @@ public class GmapMainActivity extends AppCompatActivity implements OnMapReadyCal
         gmapsUiSettings();
         gmap.setOnMarkerClickListener(this);//onMarkerClick()
         userLocationMarker();
+        gmap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+            @Override
+            public void onMapLoaded() {
+                GmapMainActivity.this.setTheme(R.style.AppTheme_NoActionAndTitleBar);
+            }
+        });
     }
 
     @Override
